@@ -2,6 +2,7 @@
 
 import os, sys, subprocess, json
 from pprint import pprint
+from termcolor import colored
 # https://github.com/inAudible-NG/tables
 ffprobe = '/usr/bin/ffprobe'
 ffmpeg = '/usr/bin/ffmpeg'
@@ -28,16 +29,22 @@ def rip(this_file):
         #print err
         props = json.loads(out)
         #print 'props: '
-        pprint(props)
-        title = props['format']['tags']['title']
-        #print 'title: %s' % title
+        #pprint(props)
+        try:
+            title = props['format']['tags']['title'].encode('utf-8').replace('(Unabridged)', '').replace('Free Version', '').strip().replace(' ', '_').replace(':', '').replace(',', '').replace("'", '').replace('!', '')
+            #print 'title: %s' % title
+        except:
+            print colored('---- cannot generate title from title in metatags of %s' % this_file, 'red')
+            pprint(props['format']['tags'])
+
         if this_dir:
             new_file = '%s/%s.m4a' % (this_dir, title)
         else:
             new_file = '%s.m4a' % (title)
         if (os.path.isfile(new_file)):
-            print '%s already exists' % new_file
+            print colored(new_file, 'green') + colored(' already exists' , 'yellow')
         else:
+            print 'ripping %s' % (colored(title, 'green'))
             ffmpeg_command = '%s -activation_bytes %s -i "%s"  -map_metadata 0 -y -vn -c:a copy "%s"' % (ffmpeg, activation_bytes, this_file, new_file)
             pprint(ffmpeg_command)
             # copy the streams and metadata including the album art
